@@ -31,17 +31,20 @@ clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 
 equalized = clahe.apply(lighting_corrected)
 
-blurred = cv2.GaussianBlur(equalized, (5, 5), 0.5)
+smooth_blurred = cv2.GaussianBlur(equalized, (5, 5), 0.5)
 
-bilateral_filtered = cv2.bilateralFilter(blurred, d=9, sigmaColor=75, sigmaSpace=75)
+bilateral_filtered = cv2.bilateralFilter(smooth_blurred, d=9, sigmaColor=75, sigmaSpace=75)
 
 # Edge detection
 
 edges = cv2.Canny(bilateral_filtered , 50, 150)
 
+kernel = np.ones((2,2), np.uint8)
+edges_morphed = cv2.dilate(edges, kernel, iterations=1)  #help the contours more pronunced 
+
 # Find contours and filter them out
 
-contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+contours, _ = cv2.findContours(edges_morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 
 # Thresholds
@@ -49,17 +52,24 @@ contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
 threshold_area = 1000
 filtered_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > threshold_area]
 
-# Create a binary mask
+# Binary Masking 
+
 mask = np.zeros_like(gray)
+
 cv2.fillPoly(mask, filtered_contours, 255)
 
+final_mask = cv2.dilate(mask, kernel, iterations=1) # apply the Dialated edges
+
+
 # Final Image Extraction 
-result = cv2.bitwise_and(image, image, mask=mask)
+
+result = cv2.bitwise_and(image, image, mask=final_mask)
 
 # Display the results
 
 cv2.imwrite('binary_threshold.png', thresholded)
-cv2.imwrite('Edges.png', edges)
-cv2.imwrite('Mask.png', mask)
+cv2.imwrite('bilateral_filtered.png', bilateral_filtered)
+cv2.imwrite('Edges.png', edges_morphed)
+cv2.imwrite('Mask.png', final_mask)
 cv2.imwrite('Result.png', result)
 

@@ -23,7 +23,7 @@ _, thresholded = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
 
 # Image Colour and Light Processing
 
-blurred = cv2.GaussianBlur(thresholded, (101, 101), 0)
+blurred = cv2.GaussianBlur(gray, (101, 101), 0)
 
 lighting_corrected = cv2.addWeighted(thresholded, 1.5, blurred, -0.5, 0)
 
